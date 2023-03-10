@@ -1,0 +1,55 @@
+plugins {
+    id 'org.jetbrains.kotlin.jvm' version '1.7.10'
+    id 'application'
+}
+
+group = 'fi.hsl'
+version = '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+    maven {
+        url "https://maven.pkg.github.com/HSLdevcom/*"
+        credentials {
+            username = project.findProperty("github.user") ?: System.getenv("GITHUB_ACTOR")
+            password = project.findProperty("github.token") ?: System.getenv("GITHUB_TOKEN")
+        }
+    }
+}
+
+dependencies {
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+
+    implementation 'ch.qos.logback:logback-classic:1.4.1'
+    implementation 'io.github.microutils:kotlin-logging-jvm:3.0.0'
+
+    implementation ('fi.hsl:transitdata-common:1.5.2') {
+        exclude group: 'javax.xml.bind', module: 'activation'
+    }
+    //Needed for Pulsar
+    implementation 'jaxb:activation:1.0.2'
+
+    implementation "com.azure:azure-storage-blob:12.13.0"
+    implementation "io.netty:netty-tcnative-boringssl-static:2.0.39.Final"
+
+    implementation "commons-codec:commons-codec:1.15"
+
+    implementation 'org.apache.parquet:parquet-hadoop:1.12.3'
+    implementation 'org.apache.hadoop:hadoop-core:1.2.1'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+compileKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+
+compileTestKotlin {
+    kotlinOptions.jvmTarget = '11'
+}
+
+application {
+    mainClassName = 'MainKt'
+}

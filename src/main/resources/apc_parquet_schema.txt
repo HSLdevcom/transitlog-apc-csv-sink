@@ -1,0 +1,39 @@
+message PassengerCount {
+    required binary topic (STRING);
+    required int64 received_at (TIMESTAMP(MILLIS, true));
+    optional binary desi (STRING);
+    optional binary dir (ENUM);
+    optional int32 oper (UINT_16);
+    optional int32 veh (UINT_16);
+    optional int64 tst (TIMESTAMP(MILLIS, true));
+    optional int64 tsi (TIMESTAMP(MILLIS, true));
+    optional double lat;
+    optional double long;
+    optional double odo;
+    optional int32 oday (DATE);
+    optional int32 jrn (UINT_16);
+    optional int32 line (UINT_16);
+    optional int32 start (TIME(MILLIS, false));
+    optional binary loc (ENUM);
+    optional int32 stop;
+    optional binary route (STRING);
+    optional binary count_quality (ENUM);
+    optional int32 vehicle_load (UINT_16);
+    optional double vehicle_load_ratio;
+    required group door_counts (LIST) {
+        repeated group list {
+            required group element {
+                required binary door (STRING);
+                required group counts (LIST) {
+                    repeated group list {
+                        required group element {
+                            required binary class (STRING);
+                            required int32 in (UINT_16);
+                            required int32 out (UINT_16);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
