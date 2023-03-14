@@ -20,11 +20,11 @@ message PassengerCount {
     optional binary count_quality (ENUM);
     optional int32 vehicle_load (UINT_16);
     optional double vehicle_load_ratio;
-    required group door_counts (LIST) {
+    optional group door_counts (LIST) {
         repeated group list {
             required group element {
                 required binary door (STRING);
-                required group counts (LIST) {
+                optional group counts (LIST) {
                     repeated group list {
                         required group element {
                             required binary class (STRING);

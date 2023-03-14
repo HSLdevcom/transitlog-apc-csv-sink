@@ -78,17 +78,19 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
                 "vehicle_load" -> writeField(i, fieldName, record.payload.vehicleCounts.vehicleLoad)
                 "vehicle_load_ratio" -> writeField(i, fieldName, record.payload.vehicleCounts.vehicleLoadRatio)
                 "door_counts" -> {
-                    recordConsumer.startField(fieldName, i)
-                    recordConsumer.startGroup()
+                    if (record.payload.vehicleCounts.doorCountsList.isNotEmpty()) {
+                        recordConsumer.startField(fieldName, i)
+                        recordConsumer.startGroup()
 
-                    recordConsumer.startField("list", 0)
+                        recordConsumer.startField("list", 0)
 
-                    record.payload.vehicleCounts.doorCountsList.forEach(::writeDoorCount)
+                        record.payload.vehicleCounts.doorCountsList.forEach(::writeDoorCount)
 
-                    recordConsumer.endField("list", 0)
+                        recordConsumer.endField("list", 0)
 
-                    recordConsumer.endGroup()
-                    recordConsumer.endField(fieldName, i)
+                        recordConsumer.endGroup()
+                        recordConsumer.endField(fieldName, i)
+                    }
                 }
             }
         }
@@ -104,15 +106,17 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
 
         writeField(0, "door", doorCount.door)
 
-        recordConsumer.startField("counts", 1)
-        recordConsumer.startGroup()
-        recordConsumer.startField("list", 0)
+        if (doorCount.countList.isNotEmpty()) {
+            recordConsumer.startField("counts", 1)
+            recordConsumer.startGroup()
+            recordConsumer.startField("list", 0)
 
-        doorCount.countList.forEach(::writeCount)
+            doorCount.countList.forEach(::writeCount)
 
-        recordConsumer.endField("list", 0)
-        recordConsumer.endGroup()
-        recordConsumer.endField("counts", 1)
+            recordConsumer.endField("list", 0)
+            recordConsumer.endGroup()
+            recordConsumer.endField("counts", 1)
+        }
 
         recordConsumer.endGroup()
         recordConsumer.endField("element", 0)
