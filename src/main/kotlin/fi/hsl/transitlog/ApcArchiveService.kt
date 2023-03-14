@@ -79,7 +79,9 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
 
                     msgIdsByFile.computeIfAbsent(file) { LinkedList<MessageId>() }.add(messageId)
                 } catch (e: Exception) {
-                    log.warn(e) { "Failed to write data to APC archive" }
+                    log.warn(e) { "Failed to write data to APC archive: $apcData" }
+                    //Ack messages that could not be written so that we don't receive them again
+                    ack(messageId)
                 }
             }
         }
