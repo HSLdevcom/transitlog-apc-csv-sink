@@ -5,8 +5,6 @@ import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Instant
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -27,7 +25,7 @@ class PassengerCountParquetWriterBuilderTest {
             .setLoc("GPS")
             .setLine(4)
             .setLong(24.626)
-            .setOday(LocalDate.now().format(DateTimeFormatter.BASIC_ISO_DATE))
+            .setOday("2023-03-14")
             .setOdo(77743.0)
             .setOper(9)
             .setRoute("2550")
