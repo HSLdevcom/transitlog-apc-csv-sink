@@ -1,6 +1,7 @@
 package fi.hsl.transitlog.parquet
 
 import fi.hsl.common.passengercount.proto.PassengerCount
+import org.apache.parquet.hadoop.metadata.CompressionCodecName
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
@@ -15,7 +16,7 @@ class PassengerCountParquetWriterBuilderTest {
     private val testData = PassengerCount.Data.newBuilder()
         .setSchemaVersion(1)
         .setReceivedAt(Instant.now().toEpochMilli())
-        .setTopic("test/test_1")
+        .setTopic("/hfp/v2/journey/ongoing/apc/bus/0017/00015")
         .setPayload(PassengerCount.Payload.newBuilder()
             .setVeh(6)
             .setDesi("550")
@@ -62,8 +63,9 @@ class PassengerCountParquetWriterBuilderTest {
     fun `Test writing passenger count data to Parquet file`() {
         val file = tempDir.resolve("test.parquet")
 
-        val passengerCountParquetWriter = PassengerCountParquetWriterBuilder(file).build()
+        val passengerCountParquetWriter = PassengerCountParquetWriterBuilder(file).withCompressionCodec(CompressionCodecName.ZSTD).build()
 
+        passengerCountParquetWriter.write(testData)
         passengerCountParquetWriter.write(testData)
         passengerCountParquetWriter.close()
 

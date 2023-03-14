@@ -3,6 +3,7 @@ package fi.hsl.transitlog.parquet
 import fi.hsl.common.passengercount.proto.PassengerCount
 import fi.hsl.common.passengercount.proto.PassengerCount.Count
 import fi.hsl.common.passengercount.proto.PassengerCount.DoorCount
+import mu.KotlinLogging
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.WriteSupport
 import org.apache.parquet.io.api.Binary
@@ -13,6 +14,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+
+private val log = KotlinLogging.logger {}
 
 class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSupport<PassengerCount.Data>() {
     private lateinit var recordConsumer: RecordConsumer
@@ -34,6 +37,8 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
     private fun <T> writeField(index: Int, fieldName: String, value: T?, valueMapper: ((T) -> Any)? = null) {
         if (value != null) {
             val valueToWrite = if (valueMapper != null) { valueMapper(value) } else { value }
+
+            log.info { "Writing $valueToWrite to field $fieldName at index $index" }
 
             recordConsumer.startField(fieldName, index)
             when (valueToWrite) {
