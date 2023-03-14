@@ -65,7 +65,7 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
                 "lat" -> writeField(i, fieldName, record.payload.lat)
                 "long" -> writeField(i, fieldName, record.payload.long)
                 "odo" -> writeField(i, fieldName, record.payload.odo)
-                "oday" -> writeField(i, fieldName, record.payload.oday) { LocalDate.parse(it, DateTimeFormatter.BASIC_ISO_DATE).toEpochDay() }
+                "oday" -> writeField(i, fieldName, record.payload.oday) { LocalDate.parse(it, DateTimeFormatter.BASIC_ISO_DATE).toEpochDay().toInt() }
                 "jrn" -> writeField(i, fieldName, record.payload.jrn)
                 "line" -> writeField(i, fieldName, record.payload.line)
                 "start" -> writeField(i, fieldName, record.payload.start) { LocalTime.parse(it, DateTimeFormatter.ISO_LOCAL_TIME).toSecondOfDay() * 1000 }
