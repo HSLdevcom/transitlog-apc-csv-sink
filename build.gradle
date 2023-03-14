@@ -1,10 +1,19 @@
 plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.7.10'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
     id 'application'
 }
 
 group = 'fi.hsl'
 version = '1.0-SNAPSHOT'
+
+shadowJar {
+    archiveFileName ="${baseName}.${extension}"
+}
+
+application {
+    mainClassName = 'fi.hsl.transitlog.MainKt'
+}
 
 repositories {
     mavenCentral()
@@ -51,8 +60,4 @@ compileKotlin {
 
 compileTestKotlin {
     kotlinOptions.jvmTarget = '11'
-}
-
-application {
-    mainClassName = 'MainKt'
 }
