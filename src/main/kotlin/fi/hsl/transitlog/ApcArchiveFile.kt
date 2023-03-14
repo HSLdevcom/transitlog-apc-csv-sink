@@ -26,7 +26,9 @@ class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : Au
         fun createApcFileName(timestamp: Long): String {
             val datetime = Instant.ofEpochMilli(timestamp).truncatedTo(ChronoUnit.HOURS).atZone(ZoneId.of("Europe/Helsinki")).toLocalDateTime()
 
-            return "apc_${DATE_HOUR_FORMATTER.format(datetime)}.parquet"
+            val minute = datetime.minute / 15
+
+            return "apc_${DATE_HOUR_FORMATTER.format(datetime)}-$minute.parquet"
         }
     }
 
