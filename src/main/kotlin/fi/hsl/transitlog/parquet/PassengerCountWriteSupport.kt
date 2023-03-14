@@ -38,11 +38,8 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
         if (value != null) {
             val valueToWrite = if (valueMapper != null) { valueMapper(value) } else { value }
 
-            log.info { "Writing $valueToWrite to field $fieldName at index $index" }
-
             recordConsumer.startField(fieldName, index)
             when (valueToWrite) {
-                is String -> recordConsumer.addBinary(Binary.fromString(valueToWrite))
                 is Double -> recordConsumer.addDouble(valueToWrite)
                 is Long -> recordConsumer.addLong(valueToWrite)
                 is Int -> recordConsumer.addInteger(valueToWrite)
