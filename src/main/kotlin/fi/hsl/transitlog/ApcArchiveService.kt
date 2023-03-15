@@ -16,7 +16,7 @@ private val log = KotlinLogging.logger {}
 
 class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink, private val ack: (MessageId) -> Unit) : AutoCloseable {
     companion object {
-        private const val MAX_QUEUE_SIZE = 10000
+        private const val MAX_QUEUE_SIZE = 500_000
 
         private val BATCH_WRITE_INTERVAL = Duration.ofSeconds(30)
 
