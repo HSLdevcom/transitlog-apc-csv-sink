@@ -58,17 +58,26 @@ class PassengerCountParquetWriterBuilderTest {
         )
         .build()
 
+    private val testDataWithoutDoorCounts = testData.toBuilder().setPayload(testData.payload.toBuilder().setVehicleCounts(testData.payload.vehicleCounts.toBuilder().clearDoorCounts())).build()
 
-    @Test
-    fun `Test writing passenger count data to Parquet file`() {
+    private fun testWritingData(passengerCount: PassengerCount.Data) {
         val file = tempDir.resolve("test.parquet")
 
         val passengerCountParquetWriter = PassengerCountParquetWriterBuilder(file).withCompressionCodec(CompressionCodecName.ZSTD).build()
 
-        passengerCountParquetWriter.write(testData)
-        passengerCountParquetWriter.write(testData)
+        passengerCountParquetWriter.write(passengerCount)
         passengerCountParquetWriter.close()
 
         assertTrue { Files.size(file) > 0 }
+    }
+
+    @Test
+    fun `Test writing passenger count data to Parquet file`() {
+        testWritingData(testData)
+    }
+
+    @Test
+    fun `Test writing without door counts`() {
+        testWritingData(testDataWithoutDoorCounts)
     }
 }
