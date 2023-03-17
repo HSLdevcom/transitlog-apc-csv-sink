@@ -3,6 +3,7 @@ package fi.hsl.transitlog.parquet
 import fi.hsl.common.passengercount.proto.PassengerCount
 import fi.hsl.common.passengercount.proto.PassengerCount.Count
 import fi.hsl.common.passengercount.proto.PassengerCount.DoorCount
+import mu.KotlinLogging
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.WriteSupport
 import org.apache.parquet.io.api.Binary
@@ -13,6 +14,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.*
+
+private val log = KotlinLogging.logger {}
 
 class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSupport<PassengerCount.Data>() {
     private lateinit var recordConsumer: RecordConsumer
@@ -37,7 +40,6 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
 
             recordConsumer.startField(fieldName, index)
             when (valueToWrite) {
-                is String -> recordConsumer.addBinary(Binary.fromString(valueToWrite))
                 is Double -> recordConsumer.addDouble(valueToWrite)
                 is Long -> recordConsumer.addLong(valueToWrite)
                 is Int -> recordConsumer.addInteger(valueToWrite)
@@ -65,7 +67,7 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
                 "lat" -> writeField(i, fieldName, record.payload.lat)
                 "long" -> writeField(i, fieldName, record.payload.long)
                 "odo" -> writeField(i, fieldName, record.payload.odo)
-                "oday" -> writeField(i, fieldName, record.payload.oday) { LocalDate.parse(it, DateTimeFormatter.BASIC_ISO_DATE).toEpochDay().toInt() }
+                "oday" -> writeField(i, fieldName, record.payload.oday) { LocalDate.parse(it, DateTimeFormatter.ISO_LOCAL_DATE).toEpochDay().toInt() }
                 "jrn" -> writeField(i, fieldName, record.payload.jrn)
                 "line" -> writeField(i, fieldName, record.payload.line)
                 "start" -> writeField(i, fieldName, record.payload.start) { LocalTime.parse(it, DateTimeFormatter.ISO_LOCAL_TIME).toSecondOfDay() * 1000 }
@@ -76,17 +78,19 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
                 "vehicle_load" -> writeField(i, fieldName, record.payload.vehicleCounts.vehicleLoad)
                 "vehicle_load_ratio" -> writeField(i, fieldName, record.payload.vehicleCounts.vehicleLoadRatio)
                 "door_counts" -> {
-                    recordConsumer.startField(fieldName, i)
-                    recordConsumer.startGroup()
+                    if (record.payload.vehicleCounts.doorCountsList.isNotEmpty()) {
+                        recordConsumer.startField(fieldName, i)
+                        recordConsumer.startGroup()
 
-                    recordConsumer.startField("list", 0)
+                        recordConsumer.startField("list", 0)
 
-                    record.payload.vehicleCounts.doorCountsList.forEach(::writeDoorCount)
+                        record.payload.vehicleCounts.doorCountsList.forEach(::writeDoorCount)
 
-                    recordConsumer.endField("list", 0)
+                        recordConsumer.endField("list", 0)
 
-                    recordConsumer.endGroup()
-                    recordConsumer.endField(fieldName, i)
+                        recordConsumer.endGroup()
+                        recordConsumer.endField(fieldName, i)
+                    }
                 }
             }
         }
@@ -102,15 +106,17 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
 
         writeField(0, "door", doorCount.door)
 
-        recordConsumer.startField("counts", 1)
-        recordConsumer.startGroup()
-        recordConsumer.startField("list", 0)
+        if (doorCount.countList.isNotEmpty()) {
+            recordConsumer.startField("counts", 1)
+            recordConsumer.startGroup()
+            recordConsumer.startField("list", 0)
 
-        doorCount.countList.forEach(::writeCount)
+            doorCount.countList.forEach(::writeCount)
 
-        recordConsumer.endField("list", 0)
-        recordConsumer.endGroup()
-        recordConsumer.endField("counts", 1)
+            recordConsumer.endField("list", 0)
+            recordConsumer.endGroup()
+            recordConsumer.endField("counts", 1)
+        }
 
         recordConsumer.endGroup()
         recordConsumer.endField("element", 0)

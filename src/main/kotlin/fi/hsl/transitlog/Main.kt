@@ -1,6 +1,7 @@
+package fi.hsl.transitlog
+
 import fi.hsl.common.config.ConfigParser
 import fi.hsl.common.pulsar.PulsarApplication
-import fi.hsl.transitlog.MessageHandler
 import mu.KotlinLogging
 
 private val log = KotlinLogging.logger {}

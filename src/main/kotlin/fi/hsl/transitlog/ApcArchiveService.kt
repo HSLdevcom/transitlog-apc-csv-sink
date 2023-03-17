@@ -16,7 +16,7 @@ private val log = KotlinLogging.logger {}
 
 class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink, private val ack: (MessageId) -> Unit) : AutoCloseable {
     companion object {
-        private const val MAX_QUEUE_SIZE = 10000
+        private const val MAX_QUEUE_SIZE = 500_000
 
         private val BATCH_WRITE_INTERVAL = Duration.ofSeconds(30)
 
@@ -74,9 +74,15 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
             log.info { "Writing ${data.size} APC messages to ${file.path}" }
 
             data.forEach { (apcData, messageId) ->
-                file.writeApc(apcData)
+                try {
+                    file.writeApc(apcData)
 
-                msgIdsByFile.computeIfAbsent(file) { LinkedList<MessageId>() }.add(messageId)
+                    msgIdsByFile.computeIfAbsent(file) { LinkedList<MessageId>() }.add(messageId)
+                } catch (e: Exception) {
+                    log.warn(e) { "Failed to write data to APC archive: $apcData" }
+                    //Ack messages that could not be written so that we don't receive them again
+                    ack(messageId)
+                }
             }
         }
     }

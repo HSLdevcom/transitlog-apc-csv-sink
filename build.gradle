@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'fi.hsl'
-version = '1.0-SNAPSHOT'
+version = '1.0.0'
 
 shadowJar {
     archiveFileName ="${baseName}.${extension}"
@@ -32,8 +32,8 @@ dependencies {
     testImplementation "org.testcontainers:testcontainers:1.17.6"
     testImplementation "org.testcontainers:junit-jupiter:1.17.6"
 
-    implementation 'ch.qos.logback:logback-classic:1.4.1'
-    implementation 'io.github.microutils:kotlin-logging-jvm:3.0.0'
+    implementation 'ch.qos.logback:logback-classic:1.4.5'
+    implementation 'io.github.microutils:kotlin-logging-jvm:3.0.5'
 
     implementation ('fi.hsl:transitdata-common:1.5.2') {
         exclude group: 'javax.xml.bind', module: 'activation'
