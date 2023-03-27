@@ -7,7 +7,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.time.Duration
 import java.time.Instant
-import java.time.ZoneId
+import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.*
@@ -22,9 +22,11 @@ class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : Au
 
         /**
          * @param timestamp Timestamp in milliseconds
+         *
+         * @return File name
          */
         fun createApcFileName(timestamp: Long): String {
-            val receivedAtLocalTime = Instant.ofEpochMilli(timestamp).atZone(ZoneId.of("Europe/Helsinki")).toLocalDateTime()
+            val receivedAtLocalTime = Instant.ofEpochMilli(timestamp).atOffset(ZoneOffset.UTC).toLocalDateTime()
 
             val dateHour = receivedAtLocalTime.truncatedTo(ChronoUnit.HOURS)
             val minute = (receivedAtLocalTime.minute / 15) + 1
