@@ -11,6 +11,7 @@ import mu.KotlinLogging
 import org.apache.pulsar.client.api.Message
 import org.apache.pulsar.client.api.MessageId
 import java.nio.file.Paths
+import java.util.concurrent.Semaphore
 
 private val log = KotlinLogging.logger {}
 
@@ -19,6 +20,8 @@ class MessageHandler(private val pulsarApplicationContext: PulsarApplicationCont
 
     private val blobConnectionString = config.getString("application.sink.azure.blobConnectionString")
     private val blobContainer = config.getString("application.sink.azure.blobContainer")
+
+    private val unackedMessageLimiter = Semaphore(config.getInt("application.maxUnackedMessages"))
 
     private val apcArchiveService = ApcArchiveService(Paths.get("apc"), AzureSink(BlobUploader(blobConnectionString, blobContainer)), ::ack)
 
@@ -29,9 +32,12 @@ class MessageHandler(private val pulsarApplicationContext: PulsarApplicationCont
                 log.error("Failed to ack Pulsar message", throwable)
                 null
             }
+            .thenRun { unackedMessageLimiter.release() }
     }
 
     override fun handleMessage(msg: Message<*>) {
+        unackedMessageLimiter.acquire()
+
         if (TransitdataSchema.hasProtobufSchema(msg, TransitdataProperties.ProtobufSchema.PassengerCount)) {
             try {
                 val apcData = PassengerCount.Data.parseFrom(msg.data)
@@ -47,6 +53,8 @@ class MessageHandler(private val pulsarApplicationContext: PulsarApplicationCont
             log.warn {
                 "Received invalid protobuf schema, expected PassengerCount but received ${TransitdataSchema.parseFromPulsarMessage(msg).orElse(null)}"
             }
+            //Ack messages with invalid schema so that we don't receive them again
+            ack(msg.messageId)
         }
     }
 
