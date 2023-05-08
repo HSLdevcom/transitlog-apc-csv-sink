@@ -16,24 +16,11 @@ import java.util.concurrent.atomic.AtomicLong
 /**
  * @param contentDuration The period for which the file should contain data
  */
-class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : AutoCloseable {
-    companion object {
-        private val DATE_HOUR_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH")
-
-        /**
-         * @param timestamp Timestamp in milliseconds
-         *
-         * @return File name
-         */
-        fun createApcFileName(timestamp: Long): String {
-            val receivedAtLocalTime = Instant.ofEpochMilli(timestamp).atOffset(ZoneOffset.UTC).toLocalDateTime()
-
-            val dateHour = receivedAtLocalTime.truncatedTo(ChronoUnit.HOURS)
-            val minute = (receivedAtLocalTime.minute / 15) + 1
-
-            return "apc_${DATE_HOUR_FORMATTER.format(dateHour)}-$minute.parquet"
-        }
-    }
+class ApcArchiveFile(val apcFileDescriptor: ApcFileDescriptorFactory.ApcFileDescriptor, private val fastUpload: Boolean) : AutoCloseable {
+    //Path to the file
+    val path = apcFileDescriptor.file
+    //Duration for which the file should contain data
+    private val contentDuration = Duration.ofNanos(apcFileDescriptor.contentStart.until(apcFileDescriptor.contentEnd, ChronoUnit.NANOS))
 
     //Path to CRC file created by Parquet writer
     private val crcPath = path.parent.resolve(".${path.fileName}.crc")
@@ -50,8 +37,18 @@ class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : Au
     private var minTst: Instant? = null
     private var maxTst: Instant? = null
 
+    private var maxReceivedAt: Instant? = null
+
     fun isReadyForUpload(): Boolean {
-        return Duration.ofNanos(System.nanoTime() - lastModified.get()) > contentDuration
+        val lastModifiedAgo = Duration.ofNanos(System.nanoTime() - lastModified.get())
+
+        //Fast upload is possible if the file contains data for the last 30 seconds and it has not been modified for one minute
+        val fastUploadPossible = fastUpload
+                && maxReceivedAt != null
+                && maxReceivedAt!!.until(apcFileDescriptor.contentEnd, ChronoUnit.SECONDS) <= 30
+                && lastModifiedAgo > Duration.ofMinutes(1)
+
+        return fastUploadPossible || lastModifiedAgo > contentDuration
     }
 
     fun writeApc(passengerCount: PassengerCount.Data) {
@@ -69,6 +66,11 @@ class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : Au
         }
         if (maxTst == null || tstAsInstant > maxTst) {
             maxTst = tstAsInstant
+        }
+
+        val receivedAtAsInstant = Instant.ofEpochMilli(passengerCount.receivedAt)
+        if (maxReceivedAt == null || receivedAtAsInstant > maxReceivedAt) {
+            maxReceivedAt = receivedAtAsInstant
         }
 
         lastModified.set(System.nanoTime())
@@ -112,5 +114,32 @@ class ApcArchiveFile(val path: Path, private val contentDuration: Duration) : Au
             passengerCountParquetWriter.close()
         }
         closed = true
+    }
+
+    class ApcFileDescriptorFactory(private val dataDirectory: Path, private val contentDuration: Duration) {
+        companion object {
+            private val DATE_HOUR_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH")
+        }
+
+        data class ApcFileDescriptor(val file: Path, val contentStart: Instant, val contentEnd: Instant)
+
+        /**
+         * @param timestamp Timestamp in milliseconds
+         *
+         * @return File descriptor
+         */
+        fun createApcFileDescriptor(timestamp: Long): ApcFileDescriptor {
+            val receivedAtUtc = Instant.ofEpochMilli(timestamp).atOffset(ZoneOffset.UTC)
+
+            val receivedAtUtcTruncated = receivedAtUtc.truncatedTo(ChronoUnit.HOURS)
+
+            val contentStart = receivedAtUtcTruncated.toInstant()
+            val contentEnd = receivedAtUtcTruncated.plus(contentDuration).toInstant()
+
+            val dateHour = receivedAtUtc.toLocalDateTime()
+            val part = (receivedAtUtcTruncated.until(receivedAtUtc, ChronoUnit.NANOS) / contentDuration.toNanos()) + 1
+
+            return ApcFileDescriptor(dataDirectory.resolve("apc_${DATE_HOUR_FORMATTER.format(dateHour)}-$part.parquet"), contentStart, contentEnd)
+        }
     }
 }
