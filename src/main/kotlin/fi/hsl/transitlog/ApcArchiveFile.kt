@@ -133,11 +133,11 @@ class ApcArchiveFile(val apcFileDescriptor: ApcFileDescriptorFactory.ApcFileDesc
 
             val receivedAtUtcTruncated = receivedAtUtc.truncatedTo(ChronoUnit.HOURS)
 
-            val contentStart = receivedAtUtcTruncated.toInstant()
-            val contentEnd = receivedAtUtcTruncated.plus(contentDuration).toInstant()
-
             val dateHour = receivedAtUtc.toLocalDateTime()
             val part = (receivedAtUtcTruncated.until(receivedAtUtc, ChronoUnit.NANOS) / contentDuration.toNanos()) + 1
+
+            val contentStart = receivedAtUtcTruncated.toInstant().plus(contentDuration.multipliedBy(part - 1))
+            val contentEnd = contentStart.plus(contentDuration)
 
             return ApcFileDescriptor(dataDirectory.resolve("apc_${DATE_HOUR_FORMATTER.format(dateHour)}-$part.parquet"), contentStart, contentEnd)
         }
