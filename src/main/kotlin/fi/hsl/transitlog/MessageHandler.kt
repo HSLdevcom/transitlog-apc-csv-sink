@@ -23,7 +23,12 @@ class MessageHandler(private val pulsarApplicationContext: PulsarApplicationCont
 
     private val unackedMessageLimiter = Semaphore(config.getInt("application.maxUnackedMessages"))
 
-    private val apcArchiveService = ApcArchiveService(Paths.get("apc"), AzureSink(BlobUploader(blobConnectionString, blobContainer)), ::ack)
+    private val apcArchiveService = ApcArchiveService(
+        Paths.get("apc"),
+        AzureSink(BlobUploader(blobConnectionString, blobContainer)),
+        config.getBoolean("application.fastUpload"),
+        ::ack
+    )
 
     private fun ack(messageId: MessageId) {
         pulsarApplicationContext.consumer!!.acknowledgeAsync(messageId)
