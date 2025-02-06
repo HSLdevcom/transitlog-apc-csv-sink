@@ -57,7 +57,7 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
         for (i in 0 until messageType.fieldCount) {
             when (val fieldName = messageType.getFieldName(i)) {
                 "topic" -> {
-                    log.info("topic: ${record.topic}")
+                    log.info("${fieldName}: ${record.topic}")
                     writeField(i, fieldName, record.topic)
                 }
                 "received_at" -> writeField(i, fieldName, record.receivedAt)
