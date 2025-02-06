@@ -51,14 +51,38 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
         }
     }
 
+    private fun <T> writeFieldDebug(index: Int, fieldName: String, value: T?, valueMapper: ((T) -> Any)? = null) {
+        if (value != null) {
+            val valueToWrite = if (valueMapper != null) {
+                valueMapper(value)
+            } else {
+                value
+            }
+
+            if (valueToWrite is ByteArray) {
+                val topicMessage = Topic.parseFrom(valueToWrite)
+                log.info("Decoded Topic: ${topicMessage}")
+            } else {
+                log.info("Not a ByteArray, skipping decode logic")
+            }
+
+            recordConsumer.startField(fieldName, index)
+            when (valueToWrite) {
+                is ByteArray -> recordConsumer.addBinary(Binary.fromConstantByteArray(valueToWrite))
+                else -> recordConsumer.addBinary(Binary.fromString(valueToWrite.toString()))
+            }
+            recordConsumer.endField(fieldName, index)
+        }
+    }
+
+
     override fun write(record: PassengerCount.Data) {
         recordConsumer.startMessage()
 
         for (i in 0 until messageType.fieldCount) {
             when (val fieldName = messageType.getFieldName(i)) {
                 "topic" -> {
-                    log.info("${fieldName}: ${record.topic}")
-                    writeField(i, fieldName, record.topic)
+                    writeFieldDebug(i, fieldName, record.topic)
                 }
                 "received_at" -> writeField(i, fieldName, record.receivedAt)
                 "desi" -> writeField(i, fieldName, record.payload.desi)
