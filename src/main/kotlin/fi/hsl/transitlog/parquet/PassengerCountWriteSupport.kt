@@ -1,8 +1,12 @@
 package fi.hsl.transitlog.parquet
 
+
+import fi.hsl.common.transitdata.TransitdataProperties
+import fi.hsl.common.transitdata.TransitdataSchema
 import fi.hsl.common.passengercount.proto.PassengerCount
 import fi.hsl.common.passengercount.proto.PassengerCount.Count
 import fi.hsl.common.passengercount.proto.PassengerCount.DoorCount
+import fi.hsl.common.passengercount.proto.PassengerCount.Topic
 import mu.KotlinLogging
 import org.apache.hadoop.conf.Configuration
 import org.apache.parquet.hadoop.api.WriteSupport
@@ -61,9 +65,10 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
 
             if (valueToWrite is ByteArray) {
                 val topicMessage = Binary.fromConstantByteArray(valueToWrite)
-                log.info("Decoded Topic: ${topicMessage}")
+                log.info("Decoded ByteArray Topic: ${topicMessage}")
             } else {
-                log.info("Not a ByteArray, skipping decode logic")
+                val topicMessage = PassengerCount.Topic.parseFrom(valueToWrite)
+                log.info("Decoded Topic: ${topicMessage}")
             }
 
             recordConsumer.startField(fieldName, index)
