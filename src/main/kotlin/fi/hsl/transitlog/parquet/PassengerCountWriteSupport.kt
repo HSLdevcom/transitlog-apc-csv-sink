@@ -60,7 +60,7 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
             }
 
             if (valueToWrite is ByteArray) {
-                val topicMessage = Topic.parseFrom(valueToWrite)
+                val topicMessage = PassengerCount.Topic.parseFrom(valueToWrite)
                 log.info("Decoded Topic: ${topicMessage}")
             } else {
                 log.info("Not a ByteArray, skipping decode logic")
