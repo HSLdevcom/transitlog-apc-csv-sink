@@ -28,6 +28,7 @@ jobs:
           path: build/libs/transitlog-apc-archive-sink.jar
           retention-days: 1
   build-develop-docker-image:
+    needs: test
     runs-on: ubuntu-latest
     # Run only on develop branch
     steps:
