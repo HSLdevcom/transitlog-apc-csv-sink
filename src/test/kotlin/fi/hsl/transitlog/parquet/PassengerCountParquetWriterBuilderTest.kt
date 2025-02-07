@@ -14,6 +14,8 @@ class PassengerCountParquetWriterBuilderTest {
     lateinit var tempDir: Path
 
     val testTopic = PassengerCount.Topic.newBuilder()
+        .setSchemaVersion(1)
+        .setReceivedAt(System.currentTimeMillis())
         .setTopicPrefix("hfp")
         .setTopicVersion("v2")
         .setJourneyType(PassengerCount.Topic.JourneyType.journey)
