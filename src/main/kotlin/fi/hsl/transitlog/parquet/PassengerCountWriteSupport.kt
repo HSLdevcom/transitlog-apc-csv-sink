@@ -52,13 +52,27 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
         }
     }
 
+    private fun buildTopicString(topic: PassengerCount.Topic): String {
+        val fields = arrayOf(
+            topic.topicPrefix,
+            topic.topicVersion,
+            topic.journeyType,
+            topic.temporalType,
+            topic.eventType,
+            topic.transportMode,
+            topic.operatorId.toString().padStart(4, '0'),
+            topic.vehicleNumber.toString().padStart(5, '0')
+        )
+        return fields.joinToString(separator = "/")
+    }
+
 
     override fun write(record: PassengerCount.Data) {
         recordConsumer.startMessage()
 
         for (i in 0 until messageType.fieldCount) {
             when (val fieldName = messageType.getFieldName(i)) {
-                "topic" -> writeField(i, fieldName, record.topic)
+                "topic" -> writeField(i, fieldName, buildTopicString(record.topic))
                 "received_at" -> writeField(i, fieldName, record.receivedAt)
                 "desi" -> writeField(i, fieldName, record.payload.desi)
                 "dir" -> writeField(i, fieldName, record.payload.dir)
