@@ -63,7 +63,8 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
             topic.operatorId.toString().padStart(4, '0'),
             topic.vehicleNumber.toString().padStart(5, '0')
         )
-        return fields.joinToString(separator = "/")
+        val topicString = fields.joinToString(separator = "/")
+        return topicString.replace("//", "/")
     }
 
 
