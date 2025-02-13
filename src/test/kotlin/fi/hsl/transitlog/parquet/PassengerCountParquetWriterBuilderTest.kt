@@ -13,10 +13,22 @@ class PassengerCountParquetWriterBuilderTest {
     @field:TempDir
     lateinit var tempDir: Path
 
+    val testTopic = PassengerCount.Topic.newBuilder()
+        .setSchemaVersion(1)
+        .setReceivedAt(System.currentTimeMillis())
+        .setTopicPrefix("hfp")
+        .setTopicVersion("v2")
+        .setJourneyType(PassengerCount.Topic.JourneyType.journey)
+        .setTemporalType(PassengerCount.Topic.TemporalType.ongoing)
+        .setEventType(PassengerCount.Topic.EventType.apc)
+        .setTransportMode(PassengerCount.Topic.TransportMode.bus)
+        .setOperatorId(17)
+        .setVehicleNumber(15)
+
     private val testData = PassengerCount.Data.newBuilder()
         .setSchemaVersion(1)
         .setReceivedAt(Instant.now().toEpochMilli())
-        .setTopic("/hfp/v2/journey/ongoing/apc/bus/0017/00015")
+        .setTopic(testTopic)
         .setPayload(PassengerCount.Payload.newBuilder()
             .setVeh(6)
             .setDesi("550")

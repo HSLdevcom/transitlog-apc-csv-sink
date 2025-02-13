@@ -12,9 +12,12 @@
 .idea/**/usage.statistics.xml
 .idea/**/dictionaries
 .idea/**/shelf
+.idea/misc.xml
+.idea/vcs.xml
 
 # Generated files
 .idea/**/contentModel.xml
+.idea/codeStyles
 
 # Sensitive or high-churn files
 .idea/**/dataSources/

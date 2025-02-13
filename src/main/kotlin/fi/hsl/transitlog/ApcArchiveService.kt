@@ -14,7 +14,7 @@ import kotlin.math.min
 
 private val log = KotlinLogging.logger {}
 
-class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink, private val ack: (MessageId) -> Unit) : AutoCloseable {
+class ApcArchiveService(dataDirectory: Path, private val sink: Sink, private val fastUpload: Boolean, private val ack: (MessageId) -> Unit) : AutoCloseable {
     companion object {
         private const val MAX_QUEUE_SIZE = 500_000
 
@@ -35,8 +35,10 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
 
     private val messageQueue = LinkedBlockingQueue<Pair<PassengerCount.Data, MessageId>>(MAX_QUEUE_SIZE)
 
-    private val files = mutableMapOf<Path, ApcArchiveFile>()
+    private val files = mutableMapOf<ApcArchiveFile.ApcFileDescriptorFactory.ApcFileDescriptor, ApcArchiveFile>()
     private val msgIdsByFile = mutableMapOf<ApcArchiveFile, MutableList<MessageId>>()
+
+    private val apcFileDescriptorFactory = ApcArchiveFile.ApcFileDescriptorFactory(dataDirectory, CONTENT_DURATION)
 
     init {
         //Start task for writing data to files in batches every 30s
@@ -62,11 +64,10 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
 
         val dataByFile = messages
             //Group data to files based on the hour it was _received_
-            .groupBy { ApcArchiveFile.createApcFileName(it.first.receivedAt) }
-            .mapKeys { dataDirectory.resolve(it.key) }
+            .groupBy { apcFileDescriptorFactory.createApcFileDescriptor(it.first.receivedAt) }
             .mapKeys {
-                files.computeIfAbsent(it.key) { path ->
-                    ApcArchiveFile(path, CONTENT_DURATION)
+                files.computeIfAbsent(it.key) { apcFileDescriptor ->
+                    ApcArchiveFile(apcFileDescriptor, fastUpload)
                 }
             }
 
@@ -88,9 +89,9 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
     }
 
     private fun uploadReadyFiles() {
-        files.values
-            .filter { it.isReadyForUpload() }
-            .forEach { apcArchiveFile ->
+        files.entries
+            .filter { it.value.isReadyForUpload() }
+            .forEach { (apcArchiveFileDescriptor, apcArchiveFile) ->
                 apcArchiveFile.close()
 
                 val messageIds = msgIdsByFile[apcArchiveFile] ?: emptyList()
@@ -103,7 +104,7 @@ class ApcArchiveService(private val dataDirectory: Path, private val sink: Sink,
 
                 apcArchiveFile.delete()
 
-                files.remove(apcArchiveFile.path)
+                files.remove(apcArchiveFileDescriptor)
                 msgIdsByFile.remove(apcArchiveFile)
             }
     }

@@ -18,7 +18,7 @@ message PassengerCount {
     optional int32 stop;
     optional binary route (STRING);
     optional binary count_quality (ENUM);
-    optional int32 vehicle_load (UINT_16);
+    optional int32 vehicle_load (INT_16);
     optional double vehicle_load_ratio;
     optional group door_counts (LIST) {
         repeated group list {

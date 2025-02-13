@@ -1,5 +1,6 @@
 package fi.hsl.transitlog.parquet
 
+
 import fi.hsl.common.passengercount.proto.PassengerCount
 import fi.hsl.common.passengercount.proto.PassengerCount.Count
 import fi.hsl.common.passengercount.proto.PassengerCount.DoorCount
@@ -51,12 +52,33 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
         }
     }
 
+    private fun buildTopicString(topic: PassengerCount.Topic): String {
+        var topicPrefix = topic.topicPrefix;
+
+        if ("/hfp/".equals(topicPrefix)) {
+            topicPrefix = "/hfp"
+        }
+
+        val fields = arrayOf(
+            topicPrefix,
+            topic.topicVersion,
+            topic.journeyType,
+            topic.temporalType,
+            topic.eventType,
+            topic.transportMode,
+            topic.operatorId.toString().padStart(4, '0'),
+            topic.vehicleNumber.toString().padStart(5, '0')
+        )
+        return fields.joinToString(separator = "/")
+    }
+
+
     override fun write(record: PassengerCount.Data) {
         recordConsumer.startMessage()
 
         for (i in 0 until messageType.fieldCount) {
             when (val fieldName = messageType.getFieldName(i)) {
-                "topic" -> writeField(i, fieldName, record.topic)
+                "topic" -> writeField(i, fieldName, buildTopicString(record.topic))
                 "received_at" -> writeField(i, fieldName, record.receivedAt)
                 "desi" -> writeField(i, fieldName, record.payload.desi)
                 "dir" -> writeField(i, fieldName, record.payload.dir)
