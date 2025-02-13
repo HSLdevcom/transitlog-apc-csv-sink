@@ -53,8 +53,14 @@ class PassengerCountWriteSupport(private val messageType: MessageType) : WriteSu
     }
 
     private fun buildTopicString(topic: PassengerCount.Topic): String {
+        var topicPrefix = topic.topicPrefix;
+
+        if ("/hfp/".equals(topicPrefix)) {
+            topicPrefix = "/hfp"
+        }
+
         val fields = arrayOf(
-            topic.topicPrefix,
+            topicPrefix,
             topic.topicVersion,
             topic.journeyType,
             topic.temporalType,
